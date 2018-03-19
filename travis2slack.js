@@ -16,6 +16,8 @@
 
 const prefix = 'travis2slack'
 
+const cloudantBinding = process.env['CLOUDANT_PACKAGE_BINDING']
+
 const slackConfig = {
     token: process.env['SLACK_TOKEN'],
     username: 'whiskbot',
@@ -27,6 +29,11 @@ if (slackConfig.token === undefined) {
     process.exit(-1)
 }
 
+if (cloudantBinding == undefined) {
+    console.error('CLOUDANT_PACKAGE_BINDING required in environment.')
+    process.exit(-1)
+}
+
 composer.sequence(
   `/whisk.system/utils/echo`,
   `${prefix}/extract`,
@@ -35,6 +42,11 @@ composer.sequence(
     composer.sequence(
       composer.retry(3, `${prefix}/fetch.log.url`),
       `${prefix}/analyze.log`)),
+  ({result, params}) => Object.assign(result, params),
+  composer.retain(
+    composer.sequence(
+      composer.literal({dbname: prefix, docid: 'authorMap' }),
+      `${cloudantBinding}/read-document`)),
   ({result, params}) => Object.assign(result, params),
   `${prefix}/format.for.slack`,
   composer.retain(

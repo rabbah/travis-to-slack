@@ -11,9 +11,6 @@ PREFIX="travis2slack"
 # default memory for the actions
 ACTION_MEMORY=128
 
-# the map of authors to slack ids
-AUTHOR_MAP="$(cat author-map.json | tr '\n' ' ')"
-
 function deploy() {
   # the package containing all actions needed by the app
   $WSK package update "${PREFIX}"
@@ -22,7 +19,7 @@ function deploy() {
   $WSK action  update "${PREFIX}/fetch.job.id" fetch-job-id.js -m $ACTION_MEMORY
   $WSK action  update "${PREFIX}/fetch.log.url" fetch-log-url.js -m $ACTION_MEMORY
   $WSK action  update "${PREFIX}/analyze.log" analyze-log.py -m $ACTION_MEMORY
-  $WSK action  update "${PREFIX}/format.for.slack" format-for-slack.js -m $ACTION_MEMORY -p authorMap "${AUTHOR_MAP}"
+  $WSK action  update "${PREFIX}/format.for.slack" format-for-slack.js -m $ACTION_MEMORY
   deployApp
   deployHook
 }
