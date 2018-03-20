@@ -41,11 +41,8 @@ function getAuthorMapComposition() {
     const fs = require('fs');
     const authorMap = JSON.parse(fs.readFileSync('author-map.json', 'utf8'));
     return composer.let({ am: authorMap }, p => {
-      if (am[p.author] == undefined) {
-        return { error: 'Unknown author' }
-      } else {
-        return { authorSlackInfo: am[p.author] } }
-      })
+      return am[p.author] == undefined ? { error: 'Unknown author' } : { authorSlackInfo: am[p.author] }
+    })
   } else {
     return composer.let({ db: dbname },
       composer.sequence(
