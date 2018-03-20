@@ -26,18 +26,18 @@ Produces a travis post similar to this:
 */
 
 function main(args) {
-    const authorMapInfo = args["authorMap"][args["author"]];
+    const authorSlackInfo = args["authorSlackInfo"];
+
+    // Too bad that we have to use error, but meh.
+    if(authorSlackInfo === undefined) {
+        return { "error": "No author info for '" + args["author"] + "'." };
+    }
 
     if(args["pr_number"] === undefined) {
         return { "error": "No pull request number." };
     }
 
-    // Too bad that we have to use error, but meh.
-    if(authorMapInfo === undefined) {
-        return { "error": "No author info for '" + args["author"] + "'." };
-    }
-
-    if(authorMapInfo["onSuccess"] || args["status"] !== "passed") {
+    if(authorSlackInfo["onSuccess"] || args["status"] !== "passed") {
         const verb = args["status"] === "error" ? "errored" : args["status"];
         const color = verb === "passed" ? "good" : "danger"
 
@@ -72,7 +72,7 @@ function main(args) {
                     fields: header_fields.concat(fields),
                     footer: footer
             }];
-        return { channel: "@" + authorMapInfo["slackHandle"], attachments: attachments, text: pretext };
+        return { channel: "@" + authorSlackInfo["userID"], attachments: attachments, text: pretext };
     } else {
         return { info: "Not posting to Slack", input: args };
     }
