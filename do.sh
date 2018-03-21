@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 SLACK_TOKEN=${SLACK_TOKEN:?"SLACK_TOKEN should be set. Ask the author."}
+SLACK_EVENT_TOKEN=${SLACK_EVENT_TOKEN:?"SLACK_EVENT_TOKEN should be set. Ask the author."}
 
 WSK='wsk'
 FSH='fsh'
@@ -33,6 +34,7 @@ function deployApps() {
 function deployHook() {
   #receives webhook and kicks off the notification app
   $WSK action update "${PREFIX}/receive.webhook" receive-webhook.js -m $ACTION_MEMORY --web true -p '$actionName' "${PREFIX}/notifyApp" -p '$ignore_certs' true
+  $WSK action update "${PREFIX}/receive.slackevents" receive-slackevent.js -m $ACTION_MEMORY --web true -p '$actionName' "${PREFIX}/whiskbot" -p '$ignore_certs' true -p expected_token "$SLACK_EVENT_TOKEN"
 }
 
 function teardown() {
