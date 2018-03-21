@@ -16,6 +16,16 @@
 
 const dbname = 'travis2slack'
 const cloudantBinding = process.env['CLOUDANT_PACKAGE_BINDING'];
+const slackConfig = {
+  token: process.env['SLACK_TOKEN'],
+  username: 'whiskbot',
+  url: 'https://slack.com/api/chat.postMessage'
+}
+
+if (slackConfig.token === undefined) {
+  console.error('SLACK_TOKEN required in environment.')
+  process.exit(-1)
+}
 
 if (cloudantBinding === undefined) {
   console.error('CLOUDANT_PACKAGE_BINDING required in environment.')
@@ -36,9 +46,25 @@ function prepareDocument(args) {
   return { _id: name, display_name: name, userID: userID, onSuccess: true }
 }
 
-composer.let({ db : dbname},
+function slackResponse(args) {
+  const name = args["name"]
+  const userID = args["userID"]
+  const sc = args["slackConfig"]
+
+  const message = "Hi, "+name+". I will now notify you when TravisCI completes testing of your Apache OpenWhisk PRs."
+
+  return Object.assign(sc, { channel: "@" + userID, text: message });
+}
+
+composer.let({ db : dbname, sc: slackConfig},
   composer.sequence(
-    composer.function(prepareDocument),
-    p => { return { dbname : db, doc: p, overwrite: true } },
-    composer.try(`${cloudantBinding}/write`, _ => { return { error: 'Failed to add author document to Cloudant' } })
+    composer.retain(
+      composer.sequence(
+        composer.function(prepareDocument),
+        p => { return { dbname : db, doc: p, overwrite: true } },
+        composer.try(`${cloudantBinding}/write`, _ => { return { error: 'Failed to add author document to Cloudant' } })
+      )),
+    ({ result, params }) => Object.assign(params, { slackConfig: sc}),
+    composer.function(slackResponse),
+    `/whisk.system/slack/post`
   ))

@@ -42,7 +42,6 @@ function teardown() {
   $WSK action  delete "${PREFIX}/fetch.log.url"
   $WSK action  delete "${PREFIX}/analyze.log"
   $WSK action  delete "${PREFIX}/format.for.slack"
-  $WSK action  delete "${PREFIX}/prepareDocument"
   $WSK action  delete "${PREFIX}/notifyApp"
   $WSK action  delete "${PREFIX}/addAuthors"
   $WSK action  delete "${PREFIX}/receive.webhook"
