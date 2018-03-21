@@ -11,9 +11,6 @@ PREFIX="travis2slack"
 # default memory for the actions
 ACTION_MEMORY=128
 
-# the map of authors to slack ids
-AUTHOR_MAP="$(cat author-map.json | tr '\n' ' ')"
-
 function deploy() {
   # the package containing all actions needed by the app
   $WSK package update "${PREFIX}"
@@ -22,19 +19,19 @@ function deploy() {
   $WSK action  update "${PREFIX}/fetch.job.id" fetch-job-id.js -m $ACTION_MEMORY
   $WSK action  update "${PREFIX}/fetch.log.url" fetch-log-url.js -m $ACTION_MEMORY
   $WSK action  update "${PREFIX}/analyze.log" analyze-log.py -m $ACTION_MEMORY
-  $WSK action  update "${PREFIX}/format.for.slack" format-for-slack.js -m $ACTION_MEMORY -p authorMap "${AUTHOR_MAP}"
+  $WSK action  update "${PREFIX}/format.for.slack" format-for-slack.js -m $ACTION_MEMORY
   deployApp
   deployHook
 }
 
 function deployApp() {
   # the app
-  $FSH app update "${PREFIX}.app" travis2slack.js
+  $FSH app update "${PREFIX}/notifyApp" travis2slack.js
 }
 
 function deployHook() {
   #receives webhook and kicks off the notification app
-  $WSK action update "${PREFIX}.receive.webhook" receive-webhook.js -m $ACTION_MEMORY --web true -p '$actionName' "${PREFIX}.app" -p '$ignore_certs' true
+  $WSK action update "${PREFIX}/receive.webhook" receive-webhook.js -m $ACTION_MEMORY --web true -p '$actionName' "${PREFIX}/notifyApp" -p '$ignore_certs' true
 }
 
 function updateAuthorMap() {
@@ -48,15 +45,15 @@ function teardown() {
   $WSK action  delete "${PREFIX}/fetch.log.url"
   $WSK action  delete "${PREFIX}/analyze.log"
   $WSK action  delete "${PREFIX}/format.for.slack"
+  $WSK action  delete "${PREFIX}/notifyApp"
+  $WSK action  delete "${PREFIX}/receive.webhook"
   $WSK package delete "${PREFIX}"
-  $WSK action  delete "${PREFIX}.app"
-  $WSK action  delete "${PREFIX}.receive.webhook"
 }
 
 function test() {
   # Edit travis-example-payload.json and change the value of the very first field ("author_name") to a value of your choice.
   # Make sure the name also exists in author-map.json. If not, edit it, teardown and setup again.
-  $WSK action invoke "${PREFIX}.receive.webhook" --param-file "sample-formdata.json"
+  $WSK action invoke "${PREFIX}/receive.webhook" --param-file "sample-formdata.json"
 }
 
 function usage() {

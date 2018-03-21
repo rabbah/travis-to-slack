@@ -12,16 +12,16 @@ You need a Slack token, `wsk` and `fsh` installed.
 Create a webhook for Travis CI against a repo. This describes the Apache Openwhisk hook.
 It is pointing to:
 ```hthml
-https://openwhisk/api/v1/web/guest/default/travis2slack.receive.webhook.json
+https://openwhisk/api/v1/web/guest/travis2slack/receive.webhook.json
 ```
 
 Run the following and store in the .travis.yml file for the repo.
 ```bash
-$ \travis encrypt --org -r openwhisk/openwhisk "https://openwhisk/api/v1/web/guest/default/travis2slack.receive.webhook.json"
+$ \travis encrypt --org -r openwhisk/openwhisk "https://openwhisk/api/v1/web/guest/travis2slack/receive.webhook.json"
 ```
 To test via curl:
 ```bash
-curl -k https://openwhisk/api/v1/web/guest/default/travis2slack.receive.webhook.json -X POST -H "Content-Type: application/json" -d @sample-formdata.json
+curl -k https://openwhisk/api/v1/web/guest/travis2slack/receive.webhook.json -X POST -H "Content-Type: application/json" -d @sample-formdata.json
 ```
 
 Here is the app state machine and an example session.
