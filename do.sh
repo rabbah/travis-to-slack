@@ -20,22 +20,19 @@ function deploy() {
   $WSK action  update "${PREFIX}/fetch.log.url" fetch-log-url.js -m $ACTION_MEMORY
   $WSK action  update "${PREFIX}/analyze.log" analyze-log.py -m $ACTION_MEMORY
   $WSK action  update "${PREFIX}/format.for.slack" format-for-slack.js -m $ACTION_MEMORY
-  deployApp
+  deployApps
   deployHook
 }
 
-function deployApp() {
-  # the app
+function deployApps() {
+  # the apps
   $FSH app update "${PREFIX}/notifyApp" travis2slack.js
+  $FSH app update "${PREFIX}/addAuthor" addAuthor.js
 }
 
 function deployHook() {
   #receives webhook and kicks off the notification app
   $WSK action update "${PREFIX}/receive.webhook" receive-webhook.js -m $ACTION_MEMORY --web true -p '$actionName' "${PREFIX}/notifyApp" -p '$ignore_certs' true
-}
-
-function updateAuthorMap() {
-  $WSK action update "${PREFIX}/format.for.slack" -p authorMap "${AUTHOR_MAP}"
 }
 
 function teardown() {
@@ -46,6 +43,7 @@ function teardown() {
   $WSK action  delete "${PREFIX}/analyze.log"
   $WSK action  delete "${PREFIX}/format.for.slack"
   $WSK action  delete "${PREFIX}/notifyApp"
+  $WSK action  delete "${PREFIX}/addAuthors"
   $WSK action  delete "${PREFIX}/receive.webhook"
   $WSK package delete "${PREFIX}"
 }
@@ -56,7 +54,7 @@ function test() {
 }
 
 function usage() {
-  echo "Usage $@ [--deploy, --deploy-app, --deploy-hook, --update-authors, --teardown, --test]"
+  echo "Usage $@ [--deploy, --deploy-app, --deploy-hook, --teardown, --test]"
 }
 
 case "$1" in
@@ -64,13 +62,10 @@ case "$1" in
 deploy
 ;;
 --deploy-app )
-deployApp
+deployApps
 ;;
 --deploy-hook )
 deployHook
-;;
---update-authors )
-updateAuthorMap
 ;;
 --teardown )
 teardown
