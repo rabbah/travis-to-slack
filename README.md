@@ -17,7 +17,7 @@ https://openwhisk/api/v1/web/guest/travis2slack/receive.webhook.json
 
 Run the following and store in the .travis.yml file for the repo.
 ```bash
-$ \travis encrypt --org -r openwhisk/openwhisk "https://openwhisk/api/v1/web/guest/travis2slack/receive.webhook.json"
+travis encrypt --org -r openwhisk/openwhisk "https://openwhisk/api/v1/web/guest/travis2slack/receive.webhook.json"
 ```
 To test via curl:
 ```bash

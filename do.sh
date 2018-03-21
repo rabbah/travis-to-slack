@@ -51,8 +51,7 @@ function teardown() {
 }
 
 function test() {
-  # Edit travis-example-payload.json and change the value of the very first field ("author_name") to a value of your choice.
-  # Make sure the name also exists in author-map.json. If not, edit it, teardown and setup again.
+  # Edit the author map to provide a valid Slack id for "Jane Doe" for ths sample formdata to reach you on Slack.
   $WSK action invoke "${PREFIX}/receive.webhook" --param-file "sample-formdata.json"
 }
 
