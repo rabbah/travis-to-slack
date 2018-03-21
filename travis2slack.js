@@ -15,16 +15,41 @@
 'use strict'
 
 const prefix = 'travis2slack'
+const dbname = 'travis2slack'
 
 const slackConfig = {
-    token: process.env['SLACK_TOKEN'],
-    username: 'whiskbot',
-    url: 'https://slack.com/api/chat.postMessage'
+  token: process.env['SLACK_TOKEN'],
+  username: 'whiskbot',
+  url: 'https://slack.com/api/chat.postMessage'
 }
 
 if (slackConfig.token === undefined) {
-    console.error('SLACK_TOKEN required in environment.')
-    process.exit(-1)
+  console.error('SLACK_TOKEN required in environment.')
+  process.exit(-1)
+}
+
+/*
+ * Return a composition that when executed on an input of the form { "author" : "Jane Smith"}
+ * will find the slack information for said author and return it in the form
+ * { authorSlackInfo : { userID: "UID", onSuccess: boolean } }.
+ * At composition deployment time, the environment variable CLOUDANT_PACKAGE_BINDING
+ * controls whether lookup is done against a bound Cloudant instance or author-map.json.
+ */
+function getAuthorMapComposition() {
+  const cloudantBinding = process.env['CLOUDANT_PACKAGE_BINDING'];
+  if (cloudantBinding == undefined) {
+    const fs = require('fs');
+    const authorMap = JSON.parse(fs.readFileSync('author-map.json', 'utf8'));
+    return composer.let({ am: authorMap }, p => {
+      return am[p.author] == undefined ? { error: 'Unknown author' } : { authorSlackInfo: am[p.author] }
+    })
+  } else {
+    return composer.let({ db: dbname },
+      composer.sequence(
+        p => { return { dbname: db, docid: p.author } },
+        composer.try(`${cloudantBinding}/read-document`, _ => { return { error: 'Unknown author' } }),
+        p => { return { authorSlackInfo: p } }))
+  }
 }
 
 composer.sequence(
@@ -35,10 +60,11 @@ composer.sequence(
     composer.sequence(
       composer.retry(3, `${prefix}/fetch.log.url`),
       `${prefix}/analyze.log`)),
-  ({result, params}) => Object.assign(result, params),
+  ({ result, params }) => Object.assign(result, params),
+  composer.retain(getAuthorMapComposition()),
+  ({ result, params }) => Object.assign(result, params),
   `${prefix}/format.for.slack`,
-  composer.retain(
-    composer.literal(slackConfig)),
-  ({result, params}) => Object.assign(result, params),
+  composer.retain(composer.literal(slackConfig)),
+  ({ result, params }) => Object.assign(result, params),
   `/whisk.system/slack/post`)
 
