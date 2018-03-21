@@ -1,0 +1,4 @@
+{
+  "Jane Doe"      : { "userID": "U123", "onSuccess" : true },
+  "John Smith"    : { "userID": "U456", "onSuccess" : true }
+}
