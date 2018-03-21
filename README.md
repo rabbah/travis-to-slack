@@ -3,7 +3,7 @@
 You need a Slack token, `wsk` and `fsh` installed.
 
   1. `export SLACK_TOKEN="..."`
-  2. Make sure your name and Slack handle is in `author-map.json`.
+  2. Create `author-map.json` containing your name and Slack userID (see `author-map-template.json`).
   2. `./do.sh --deploy`
   3. `./do.sh --test`   # make sure you're the author of the mock PR (use your "name", not Slack handle as in `author-map.json`).
   4. Confirm you received the Slack notification.
