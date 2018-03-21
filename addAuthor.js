@@ -37,10 +37,10 @@ function prepareDocument(args) {
   const userID = args["userID"]
 
   if (name == undefined) {
-    return { error : "`name` was not defined"}
+    return { error: "`name` was not defined" }
   }
   if (userID == undefined) {
-    return { error : "`userID` was not defined"}
+    return { error: "`userID` was not defined" }
   }
 
   return { _id: name, display_name: name, userID: userID, onSuccess: true }
@@ -51,20 +51,20 @@ function slackResponse(args) {
   const userID = args["userID"]
   const sc = args["slackConfig"]
 
-  const message = "Hi, "+name+". I will now notify you when TravisCI completes testing of your Apache OpenWhisk PRs."
+  const message = "Hi, " + name + ". I will now notify you when TravisCI completes testing of your Apache OpenWhisk PRs."
 
   return Object.assign(sc, { channel: "@" + userID, text: message });
 }
 
-composer.let({ db : dbname, sc: slackConfig},
+composer.let({ db: dbname, sc: slackConfig },
   composer.sequence(
     composer.retain(
       composer.sequence(
-        composer.function(prepareDocument),
-        p => { return { dbname : db, doc: p, overwrite: true } },
+        prepareDocument,
+        p => { return { dbname: db, doc: p, overwrite: true } },
         composer.try(`${cloudantBinding}/write`, _ => { return { error: 'Failed to add author document to Cloudant' } })
       )),
-    ({ result, params }) => Object.assign(params, { slackConfig: sc}),
-    composer.function(slackResponse),
+    ({ result, params }) => Object.assign(params, { slackConfig: sc }),
+    slackResponse,
     `/whisk.system/slack/post`
   ))
