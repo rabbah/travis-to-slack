@@ -4,7 +4,7 @@ SLACK_TOKEN=${SLACK_TOKEN:?"SLACK_TOKEN should be set. Ask the author."}
 SLACK_EVENT_TOKEN=${SLACK_EVENT_TOKEN:?"SLACK_EVENT_TOKEN should be set. Ask the author."}
 
 WSK='wsk'
-FSH='fsh'
+APP_DEPLOY='compose --deploy'   # or 'fsh app update' once fsh updates to composer v0.2.1 or better
 
 # package name for actions
 PREFIX="travis2slack"
@@ -13,7 +13,7 @@ PREFIX="travis2slack"
 ACTION_MEMORY=128
 
 function deploy() {
-  # the package containing all actions needed by the app
+  # the package containing all helper actions needed by the apps
   $WSK package update "${PREFIX}"
   $WSK action  update "${PREFIX}/extract" extract-build-info.js -m $ACTION_MEMORY
   $WSK action  update "${PREFIX}/is.failure" is-failure.js -m $ACTION_MEMORY
@@ -22,19 +22,21 @@ function deploy() {
   $WSK action  update "${PREFIX}/analyze.log" analyze-log.py -m $ACTION_MEMORY
   $WSK action  update "${PREFIX}/format.for.slack" format-for-slack.js -m $ACTION_MEMORY
   deployApps
-  deployHook
+  deployHooks
 }
 
 function deployApps() {
   # the apps
-  $FSH app update "${PREFIX}/notifyApp" travis2slack.js
-  $FSH app update "${PREFIX}/addAuthor" addAuthor.js
+  $APP_DEPLOY "${PREFIX}/notifyApp" travis2slack.js
+  $APP_DEPLOY "${PREFIX}/subscribeApp" addSubscription.js
+  $APP_DEPLOY "${PREFIX}/unsubscribeApp" removeSubscription.js
 }
 
-function deployHook() {
-  #receives webhook and kicks off the notification app
-  $WSK action update "${PREFIX}/receive.webhook" receive-webhook.js -m $ACTION_MEMORY --web true -p '$actionName' "${PREFIX}/notifyApp" -p '$ignore_certs' true
-  $WSK action update "${PREFIX}/receive.slackevents" receive-slackevent.js -m $ACTION_MEMORY --web true -p '$actionName' "${PREFIX}/whiskbot" -p '$ignore_certs' true -p expected_token "$SLACK_EVENT_TOKEN"
+function deployHooks() {
+  # the exposed webhooks
+  $WSK action update "${PREFIX}/receive.travis.webhook" receive-webhook.js -m $ACTION_MEMORY --web true -p '$eventSource' 'travis' -p '$actionName' "${PREFIX}/notifyApp" -p '$ignore_certs' true
+  $WSK action update "${PREFIX}/receive.slack-subscribe.webhook" receive-webhook.js -m $ACTION_MEMORY --web true -p '$eventSource' 'slack' -p '$actionName' "${PREFIX}/subscribeApp" -p '$ignore_certs' true -p expected_token "$SLACK_EVENT_TOKEN"
+  $WSK action update "${PREFIX}/receive.slack-unsubscribe.webhook" receive-webhook.js -m $ACTION_MEMORY --web true -p '$eventSource' 'slack' -p '$actionName' "${PREFIX}/unsubscribeApp" -p '$ignore_certs' true -p expected_token "$SLACK_EVENT_TOKEN"
 }
 
 function teardown() {
@@ -44,15 +46,21 @@ function teardown() {
   $WSK action  delete "${PREFIX}/fetch.log.url"
   $WSK action  delete "${PREFIX}/analyze.log"
   $WSK action  delete "${PREFIX}/format.for.slack"
+
   $WSK action  delete "${PREFIX}/notifyApp"
-  $WSK action  delete "${PREFIX}/addAuthors"
-  $WSK action  delete "${PREFIX}/receive.webhook"
+  $WSK action  delete "${PREFIX}/subscribeApp"
+  $WSK action  delete "${PREFIX}/unsubscribeApp"
+
+  $WSK action  delete "${PREFIX}/receive.travis.webhook"
+  $WSK action  delete "${PREFIX}/receive.slack-subscribe.webhook"
+  $WSK action  delete "${PREFIX}/receive.slack-unsubscribe.webhook"
+
   $WSK package delete "${PREFIX}"
 }
 
 function test() {
   # Edit the author map to provide a valid Slack id for "Jane Doe" for ths sample formdata to reach you on Slack.
-  $WSK action invoke "${PREFIX}/receive.webhook" --param-file "sample-formdata.json"
+  $WSK action invoke "${PREFIX}/receive.travis.webhook" --param-file "sample-formdata.json"
 }
 
 function usage() {
@@ -67,7 +75,7 @@ deploy
 deployApps
 ;;
 --deploy-hook )
-deployHook
+deployHooks
 ;;
 --teardown )
 teardown

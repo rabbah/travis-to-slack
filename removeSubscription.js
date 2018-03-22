@@ -32,39 +32,31 @@ if (cloudantBinding === undefined) {
   process.exit(-1)
 }
 
-function prepareDocument(args) {
-  const name = args["name"]
-  const userID = args["userID"]
+function filterParams(args) {
+  const userID = args.user_id
+  const responseURL = args.response_url
 
-  if (name == undefined) {
-    return { error: "`name` was not defined" }
-  }
   if (userID == undefined) {
-    return { error: "`userID` was not defined" }
+    return { error: "`user_id` was not defined" }
   }
 
-  return { _id: name, display_name: name, userID: userID, onSuccess: true }
+  return { userID: userID, responseURL: responseURL }
 }
 
 function slackResponse(args) {
-  const name = args["name"]
-  const userID = args["userID"]
-  const sc = args["slackConfig"]
+  const userID = args.userID
+  const sc = args.slackConfig
 
-  const message = "Hi, " + name + ". I will now notify you when TravisCI completes testing of your Apache OpenWhisk PRs."
+  const message = "I'm sorry, unsubscription is still manual. Please contact the app owner for help"
 
   return Object.assign(sc, { channel: "@" + userID, text: message });
 }
 
 composer.let({ db: dbname, sc: slackConfig },
   composer.sequence(
-    composer.retain(
-      composer.sequence(
-        prepareDocument,
-        p => { return { dbname: db, doc: p, overwrite: true } },
-        composer.try(`${cloudantBinding}/write`, _ => { return { error: 'Failed to add author document to Cloudant' } })
-      )),
-    ({ result, params }) => Object.assign(params, { slackConfig: sc }),
+    `/whisk.system/utils/echo`,
+    filterParams,
+    p => Object.assign(p, { slackConfig: sc }),
     slackResponse,
     `/whisk.system/slack/post`
   ))
