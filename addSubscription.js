@@ -32,39 +32,26 @@ if (cloudantBinding === undefined) {
   process.exit(-1)
 }
 
-function prepareDocument(args) {
-  const name = args["name"]
-  const userID = args["userID"]
-
-  if (name == undefined) {
-    return { error: "`name` was not defined" }
-  }
-  if (userID == undefined) {
-    return { error: "`userID` was not defined" }
-  }
-
-  return { _id: name, display_name: name, userID: userID, onSuccess: true }
-}
-
-function slackResponse(args) {
-  const name = args["name"]
-  const userID = args["userID"]
-  const sc = args["slackConfig"]
-
-  const message = "Hi, " + name + ". I will now notify you when TravisCI completes testing of your Apache OpenWhisk PRs."
-
-  return Object.assign(sc, { channel: "@" + userID, text: message });
-}
-
-composer.let({ db: dbname, sc: slackConfig },
+composer.let({ db: dbname, sc: slackConfig, userID: undefined, name: undefined },
   composer.sequence(
-    composer.retain(
+    `/whisk.system/utils/echo`,
+    p => { name = p.text; userID = p.user_id },
+    composer.try(
       composer.sequence(
-        prepareDocument,
-        p => { return { dbname: db, doc: p, overwrite: true } },
-        composer.try(`${cloudantBinding}/write`, _ => { return { error: 'Failed to add author document to Cloudant' } })
-      )),
-    ({ result, params }) => Object.assign(params, { slackConfig: sc }),
-    slackResponse,
+        _ => ({ dbname: db, doc: { _id: name, display_name: name, userID: userID, onSuccess: true }, overwrite: false }),
+        `${cloudantBinding}/write`,
+        _ => ({ message: "Hi, " + name + ". I will now notify you when TravisCI jobs for your Apache OpenWhisk PRs complete." })
+      ),
+      // write failed.  Try to figure out why
+      composer.try(
+        composer.sequence(
+          p => ({ dbname: db, docid: name }),
+          `${cloudantBinding}/read-document`,
+          doc => ({ message: "I'm sorry, but <@" + doc.userID + "> is already subscribed to be notified for PRs by `" + name + "`" })
+        ),
+        _ => ({ message: "I'm sorry. There was an error updating Cloudant. Try again later." })
+      )
+    ),
+    p => Object.assign(sc, { channel: "@" + userID, text: p.message }),
     `/whisk.system/slack/post`
   ))
