@@ -41,30 +41,40 @@ function getAuthorMapComposition() {
     const fs = require('fs');
     const authorMap = JSON.parse(fs.readFileSync('author-map.json', 'utf8'));
     return composer.let({ am: authorMap }, p => {
-      return am[p.author] == undefined ? { error: 'Unknown author' } : { authorSlackInfo: am[p.author] }
+      return am[p.author] == undefined ? {} : am[p.author]
     })
   } else {
     return composer.let({ db: dbname },
       composer.sequence(
-        p => { return { dbname: db, docid: p.author } },
-        composer.try(`${cloudantBinding}/read-document`, _ => { return { error: 'Unknown author' } }),
-        p => { return { authorSlackInfo: p } }))
+        p => ({ dbname: db, docid: p.author }),
+        composer.try(`${cloudantBinding}/read-document`, _ => ({}))
+      ))
   }
 }
 
-composer.sequence(
-  `/whisk.system/utils/echo`,
-  `${prefix}/extract`,
-  `${prefix}/fetch.job.id`,
-  composer.retain(
-    composer.sequence(
-      composer.retry(3, `${prefix}/fetch.log.url`),
-      `${prefix}/analyze.log`)),
-  ({ result, params }) => Object.assign(result, params),
-  composer.retain(getAuthorMapComposition()),
-  ({ result, params }) => Object.assign(result, params),
-  `${prefix}/format.for.slack`,
-  composer.retain(composer.literal(slackConfig)),
-  ({ result, params }) => Object.assign(result, params),
-  `/whisk.system/slack/post`)
+composer.let({ prDetails: undefined, authorSlackInfo: undefined },
+  composer.sequence(
+    `/whisk.system/utils/echo`,
+    `${prefix}/extract`,
+    `${prefix}/fetch.job.id`,
+    p => { prDetails = p },
+    composer.if(
+      _ => prDetails.pr_number == undefined,
+      _ => 'No PR number in TravisCI input; terminating computation',
+      composer.sequence(
+        getAuthorMapComposition(),
+        p => { authorSlackInfo = p },
+        composer.if(
+          _ => authorSlackInfo.userID == undefined,
+          _ => 'The PR author ' + prDetails.author + ' is not subscribed for notifications',
+          composer.sequence(
+            _ => prDetails,
+            composer.retry(3, `${prefix}/fetch.log.url`),
+            `${prefix}/analyze.log`,
+            p => Object.assign(p, prDetails, { authorSlackInfo: authorSlackInfo }),
+            `${prefix}/format.for.slack`,
+            composer.retain(composer.literal(slackConfig)),
+            ({ result, params }) => Object.assign(result, params),
+            `/whisk.system/slack/post`)
+        )))))
 
