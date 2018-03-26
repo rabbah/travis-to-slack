@@ -60,13 +60,21 @@ composer.let({ prDetails: undefined, authorSlackInfo: undefined },
     p => { prDetails = p },
     composer.if(
       _ => prDetails.pr_number == undefined,
-      _ => 'No PR number in TravisCI input; terminating computation',
+      _ => {
+        const msg = 'No PR number in TravisCI input; terminating computation';
+        console.log(msg);
+        return msg
+      },
       composer.sequence(
         getAuthorMapComposition(),
         p => { authorSlackInfo = p },
         composer.if(
           _ => authorSlackInfo.userID == undefined,
-          _ => 'The PR author ' + prDetails.author + ' is not subscribed for notifications',
+          _ => {
+            const msg = 'The PR author ' + prDetails.author + ' is not subscribed for notifications';
+            console.log(msg);
+            return msg
+          },
           composer.sequence(
             _ => prDetails,
             composer.retry(3, `${prefix}/fetch.log.url`),
