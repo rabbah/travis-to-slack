@@ -37,10 +37,10 @@ The application control and data flow are illustrated in the figure below and co
   </tr>
 </table>
 
-* [`extract`](https://github.com/rabbah/travis-to-slack/blob/master/extract-build-info.js#L33-L40): The build notification contains several properties to extract, including the repository, pull request number, author name, and build details.
+* [`extract`](https://github.com/rabbah/travis-to-slack/blob/master/extract-build-info.js#L49-L56): The build notification contains several properties to extract, including the repository, pull request number, author name, and build details.
 * [`fetch job id`](https://github.com/rabbah/travis-to-slack/blob/master/fetch-job-id.js): queries Travis CI to determine the job id. This id determines the location of the build logs.
 * [`verify log url`](https://github.com/rabbah/travis-to-slack/blob/master/verify-log-url.js): determines the location for the Travis CI logs from the job id. Travis may store the logs internally or archive them on Amazon’s S3. There is a short window where neither location is valid. This action determines which location to use and fails if there are no logs yet (in which case, the function should be retried).
-* [`analyze log`](https://github.com/rabbah/travis-to-slack/blob/master/analyze-log.py#L18): fetches the logs from the given URL and analyzes them for test failures.
+* [`analyze log`](https://github.com/rabbah/travis-to-slack/blob/master/analyze-log.py#L33): fetches the logs from the given URL and analyzes them for test failures.
 * [`format message`](https://github.com/rabbah/travis-to-slack/blob/master/format-for-slack.js): this action combines the results of the log analysis with the build information extracted earlier to generate the contents of the notification message.
 * [`post notification`](https://github.com/apache/incubator-openwhisk-catalog/blob/master/packages/slack/post.js): sends the Slack message to the intended recipient. This action requires a Slack bot token.
 

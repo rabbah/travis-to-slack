@@ -1,30 +1,41 @@
 /*
-Produces a travis post similar to this:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-{
-"attachments": [
-        {
-        "fallback": "These tests failed XYZ.",
-        "color": "danger",
-        "title": "Your build #1421 failed",
-        "title_link": "https://api.travis-ci.org/jobs/174228592/log.txt?deansi=true",
-        "fields": [
-                {
-                "title": "whisk.core.controller.test.AuthenticateTests",
-                "value": "Authenticate should authorize a known user from cache"
-                },  
-                {
-                "title": "whisk.core.controller.test.AuthenticateTests2",
-                "value": "Authenticate should authorize a known user from cache2"
-                }
-            ],
-#           "footer": "Whisk PR bot",
-#           "ts": 123456789
-        }
-    ]
-}
-*/
+'use strict'
 
+/**
+ * Produces a travis post similar to this:
+ * { "attachments": [ {
+ *      "fallback": "These tests failed XYZ.",
+ *      "color": "danger",
+ *      "title": "Your build #1421 failed",
+ *      "title_link": "https://api.travis-ci.org/jobs/174228592/log.txt?deansi=true",
+ *      "fields": [
+ *          {
+ *              "title": "whisk.core.controller.test.AuthenticateTests",
+ *              "value": "Authenticate should authorize a known user from cache"
+ *          },  
+ *          {
+ *              "title": "whisk.core.controller.test.AuthenticateTests2",
+ *              "value": "Authenticate should authorize a known user from cache2"
+ *          }
+ *      ],
+ *      "footer": "Whisk PR bot",
+ *      "ts": 123456789
+ *   } ]
+ * }
+ */
 function main(args) {
     const authorSlackInfo = args["authorSlackInfo"];
 
