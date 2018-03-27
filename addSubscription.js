@@ -35,17 +35,17 @@ if (cloudantBinding === undefined) {
 composer.let({ db: dbname, sc: slackConfig, userID: undefined, name: undefined },
   composer.sequence(
     `/whisk.system/utils/echo`,
-    p => { name = p.text; userID = p.user_id },
+    p => { name = p.text; docId = p.text.toUpperCase(); userID = p.user_id },
     composer.try(
       composer.sequence(
-        _ => ({ dbname: db, doc: { _id: name, display_name: name, userID: userID, onSuccess: true }, overwrite: false }),
+        _ => ({ dbname: db, doc: { _id: docId, display_name: name, userID: userID, onSuccess: true }, overwrite: false }),
         `${cloudantBinding}/write`,
         _ => ({ message: "Hi, " + name + ". I will now notify you when TravisCI jobs for your Apache OpenWhisk PRs complete." })
       ),
       // write failed.  Try to figure out why
       composer.try(
         composer.sequence(
-          p => ({ dbname: db, docid: name }),
+          p => ({ dbname: db, docid: docId }),
           `${cloudantBinding}/read-document`,
           doc => ({ message: "I'm sorry, but <@" + doc.userID + "> is already subscribed to be notified for PRs by `" + name + "`" })
         ),
