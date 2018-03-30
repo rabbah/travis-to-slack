@@ -32,26 +32,36 @@ if (cloudantBinding === undefined) {
   process.exit(-1)
 }
 
-composer.let({ db: dbname, sc: slackConfig, userID: null, name: null },
+composer.let({ db: dbname, sc: slackConfig, userID: null, name: null, response: null },
   composer.sequence(
     `/whisk.system/utils/echo`,
-    p => { name = p.text; docId = p.text.toUpperCase(); userID = p.user_id },
-    composer.try(
+    p => { name = p.text; docId = p.text.trim().toUpperCase(); userID = p.user_id },
+    composer.if(
+      _ => docId === "",
+      _ => { response = "Usage: /subscribe-travis \"YOUR NAME HERE\"" },
       composer.sequence(
-        _ => ({ dbname: db, doc: { _id: docId, display_name: name, userID: userID, onSuccess: true }, overwrite: false }),
-        `${cloudantBinding}/write`,
-        _ => ({ message: "Hi, " + name + ". I will now notify you when TravisCI jobs for your Apache OpenWhisk PRs complete." })
-      ),
-      // write failed.  Try to figure out why
-      composer.try(
-        composer.sequence(
-          p => ({ dbname: db, docid: docId }),
-          `${cloudantBinding}/read-document`,
-          doc => ({ message: "I'm sorry, but <@" + doc.userID + "> is already subscribed to be notified for PRs by `" + name + "`" })
-        ),
-        _ => ({ message: "I'm sorry. There was an error updating Cloudant. Try again later." })
+        composer.try(
+          composer.sequence(
+            // Attempt to write the document describing the subscription to the database
+            _ => ({ dbname: db, doc: { _id: docId, display_name: name, userID: userID, onSuccess: true }, overwrite: false }),
+            `${cloudantBinding}/write`,
+            _ => { response = "Hi, " + name + ". I will now notify you when TravisCI jobs for your Apache OpenWhisk PRs complete." }
+          ),
+          // write failed.  Try to figure out why
+          composer.try(
+            // First, check to see document with same docId already exists. Duplicate subscription!
+            composer.sequence(
+              p => ({ dbname: db, docid: docId }),
+              `${cloudantBinding}/read-document`,
+              doc => { response = "I'm sorry, but <@" + doc.userID + "> is already subscribed to be notified for PRs by `" + name + "`" }
+            ),
+            // Something else went wrong with the write; ask user to try again later.
+            _ => { response = "I'm sorry. There was an error updating Cloudant. Try again later." }
+          )
+        )
       )
     ),
-    p => Object.assign(sc, { channel: "@" + userID, text: p.message }),
+    // Post the final result of the subscription request back to the user via slack.
+    _ => Object.assign(sc, { channel: "@" + userID, text: response }),
     `/whisk.system/slack/post`
   ))

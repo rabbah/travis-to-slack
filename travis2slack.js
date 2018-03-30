@@ -46,7 +46,7 @@ function getAuthorMapComposition() {
   } else {
     return composer.let({ db: dbname },
       composer.sequence(
-        p => ({ dbname: db, docid: p.author.toUpperCase() }),
+        p => ({ dbname: db, docid: p.author.trim().toUpperCase() }),
         composer.try(`${cloudantBinding}/read-document`, _ => ({}))
       ))
   }
