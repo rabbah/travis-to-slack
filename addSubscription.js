@@ -32,7 +32,7 @@ if (cloudantBinding === undefined) {
   process.exit(-1)
 }
 
-composer.let({ db: dbname, sc: slackConfig, userID: undefined, name: undefined },
+composer.let({ db: dbname, sc: slackConfig, userID: null, name: null },
   composer.sequence(
     `/whisk.system/utils/echo`,
     p => { name = p.text; docId = p.text.toUpperCase(); userID = p.user_id },

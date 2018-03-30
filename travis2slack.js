@@ -52,7 +52,7 @@ function getAuthorMapComposition() {
   }
 }
 
-composer.let({ prDetails: undefined, authorSlackInfo: undefined },
+composer.let({ prDetails: null, authorSlackInfo: null },
   composer.sequence(
     `/whisk.system/utils/echo`,
     `${prefix}/extract`,
