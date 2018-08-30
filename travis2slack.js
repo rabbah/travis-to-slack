@@ -12,6 +12,8 @@
  * limitations under the License.
  */
 
+const composer = require('@ibm-functions/composer')
+
 'use strict'
 
 const prefix = 'travis2slack'
@@ -39,7 +41,7 @@ function getAuthorMapComposition() {
   const cloudantBinding = process.env['CLOUDANT_PACKAGE_BINDING'];
   if (cloudantBinding == undefined) {
     const fs = require('fs');
-    const authorMap = JSON.parse(fs.readFileSync('author-map.json', 'utf8'));
+    const authorMap = require('./author-map.json')
     return composer.let({ am: authorMap }, p => {
       return am[p.author] == undefined ? {} : am[p.author]
     })
@@ -52,7 +54,7 @@ function getAuthorMapComposition() {
   }
 }
 
-composer.let({ prDetails: null, authorSlackInfo: null },
+module.exports = composer.let({ prDetails: null, authorSlackInfo: null },
   composer.sequence(
     `/whisk.system/utils/echo`,
     `${prefix}/extract`,
