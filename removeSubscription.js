@@ -14,6 +14,8 @@
 
 'use strict'
 
+const composer = require('@ibm-functions/composer')
+
 const dbname = 'travis2slack'
 const cloudantBinding = process.env['CLOUDANT_PACKAGE_BINDING'];
 const slackConfig = {
@@ -52,7 +54,7 @@ function slackResponse(args) {
   return Object.assign(sc, { channel: "@" + userID, text: message });
 }
 
-composer.let({ db: dbname, sc: slackConfig },
+module.exports = composer.let({ db: dbname, sc: slackConfig },
   composer.sequence(
     `/whisk.system/utils/echo`,
     filterParams,

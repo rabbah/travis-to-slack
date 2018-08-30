@@ -19,7 +19,6 @@ SLACK_TOKEN=${SLACK_TOKEN:?"SLACK_TOKEN should be set. Ask the author."}
 SLACK_EVENT_TOKEN=${SLACK_EVENT_TOKEN:?"SLACK_EVENT_TOKEN should be set. Ask the author."}
 
 WSK='wsk'
-APP_DEPLOY='compose --deploy'   # or 'fsh app update' once fsh updates to composer v0.2.1 or better
 
 # package name for actions
 PREFIX="travis2slack"
@@ -42,9 +41,9 @@ function deploy() {
 
 function deployApps() {
   # the apps
-  $APP_DEPLOY "${PREFIX}/notifyApp" travis2slack.js
-  $APP_DEPLOY "${PREFIX}/subscribeApp" addSubscription.js
-  $APP_DEPLOY "${PREFIX}/unsubscribeApp" removeSubscription.js
+  compose travis2slack.js --deploy "${PREFIX}/notifyApp"
+  compose addSubscription.js --deploy "${PREFIX}/subscribeApp"
+  compose removeSubscription.js --deploy "${PREFIX}/unsubscribeApp"
 }
 
 function deployHooks() {
