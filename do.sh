@@ -73,8 +73,9 @@ function teardown() {
 }
 
 function test() {
-  # Edit the author map to provide a valid Slack id for "Jane Doe" for ths sample formdata to reach you on Slack.
-  $WSK action invoke "${PREFIX}/receive.travis.webhook" --param-file "sample-formdata.json"
+  # Edit the author map to provide a valid Slack id for "Jane Doe" for these examples to reach you on Slack.
+  $WSK action invoke "${PREFIX}/receive.travis.webhook" --param-file "test1.json"
+  $WSK action invoke "${PREFIX}/receive.travis.webhook" --param-file "test2.json"
 }
 
 function usage() {

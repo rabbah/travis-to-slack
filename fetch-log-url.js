@@ -15,39 +15,39 @@
 'use strict'
 
 /**
- * @param args of the format { "job_id" : numeric_string }
- * @return { "log_url" : url }
+ * @param args of the format { "job_ids" : [numeric_string] }
+ * @return { "log_urls" : [url] }
  */
-function main (args) {
-    const job_id = args["job_id"];
-
-    if(!job_id || isNaN(job_id)) {
-        return { "error": "Expected job_id to be a numerical string." };
-    }
-
-    const c1 = "https://api.travis-ci.org/jobs/" + job_id + "/log.txt?deansi=true";
-    const c2 = "https://s3.amazonaws.com/archive.travis-ci.org/jobs/" + job_id + "/log.txt";
-
+function main(args) {
+    const job_ids = args["job_ids"];
     const request = require("request");
 
-    return new Promise(function(resolve, reject) {
-        console.log("Trying " + c1 + "...");
-        request(c1, function (error1, response1, body1) {
-            if(!error1 && response1.statusCode == 200) {
-                console.log("Success!");
-                resolve({ "log_url": c1 })
-            } else {
-                console.log("Trying " + c2 + "...");
-                request(c2, function(error2, response2, body2) {
-                    if(!error2 && response2.statusCode == 200) {
-                        console.log("Success!");
-                        resolve({ "log_url": c2 })
-                    } else {
-                        console.log("Failure to retrive log.");
-                        reject("Couldn't obtain log URL. Tried:\n  - " + c1 + "\n  - " + c2);
-                    }
-                });
-            }
-        });
+    const log_urls = job_ids.map(function (job_id) {
+
+        const c1 = "https://api.travis-ci.org/jobs/" + job_id + "/log.txt?deansi=true";
+        const c2 = "https://s3.amazonaws.com/archive.travis-ci.org/jobs/" + job_id + "/log.txt";
+
+        return new Promise(function (resolve, reject) {
+            console.log("Trying " + c1 + "...");
+            request(c1, function (error1, response1, body1) {
+                if (!error1 && response1.statusCode == 200) {
+                    console.log("Success!");
+                    resolve(c1)
+                } else {
+                    console.log("Trying " + c2 + "...");
+                    request(c2, function (error2, response2, body2) {
+                        if (!error2 && response2.statusCode == 200) {
+                            console.log("Success!");
+                            resolve(c2)
+                        } else {
+                            console.log("Failed to retrive log for sub-job "+job_id);
+                            resolve("")
+                        }
+                    });
+                }
+            });
+        })
     });
+
+    return Promise.all(log_urls).then(function (urls) { return { "log_urls": urls.filter( x => x != "") } });
 }
