@@ -19,7 +19,7 @@
  *           { "author" : string, 
  *             "build_id": numeric_string,
  *             "status": "success" | "error" | "failure" }
- * @return the record augmented with { "job_id" : numeric_string }
+ * @return the record augmented with { "job_ids" : [numeric_string] }
  */
 function main(args) {
     const build_id = args["build_id"]
@@ -45,8 +45,8 @@ function main(args) {
             } else {
                 // forwards the incoming arguments...
                 let result = args;
-                // ... after augmenting with job id
-                result["job_id"] = (body["jobs"][0]["id"]).toString();
+                // ... after augmenting with array of job ids
+                result["job_ids"] = body["jobs"].map(j => j["id"])
                 resolve(result);
             }
         });
