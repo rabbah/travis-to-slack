@@ -14,7 +14,7 @@
 
 'use strict'
 
-const composer = require('@ibm-functions/composer')
+const composer = require('openwhisk-composer')
 
 const dbname = 'travis2slack'
 const cloudantBinding = process.env['CLOUDANT_PACKAGE_BINDING'];
