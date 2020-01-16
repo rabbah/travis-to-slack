@@ -33,7 +33,7 @@ function deployPackage() {
   $WSK action  update "${PREFIX}/is.failure" is-failure.js -m $ACTION_MEMORY
   $WSK action  update "${PREFIX}/fetch.job.id" fetch-job-id.js -m $ACTION_MEMORY
   $WSK action  update "${PREFIX}/fetch.log.url" fetch-log-url.js -m $ACTION_MEMORY
-  $WSK action  update "${PREFIX}/analyze.log" analyze-log.py -m $ACTION_MEMORY
+  $WSK action  update "${PREFIX}/analyze.log" analyze-log.py --kind python:3 -m $ACTION_MEMORY
   $WSK action  update "${PREFIX}/format.for.slack" format-for-slack.js -m $ACTION_MEMORY
   deployApps
   deployHooks

@@ -30,8 +30,10 @@ def main(args):
 
     for log_url in log_urls:
         with closing(requests.get(log_url, stream=True)) as r:
+            if r.encoding is None:
+                r.encoding = 'utf-8'
             for line in r.iter_lines():
-                m = re.match("""^([^>]*) > (.*) FAILED$""", line.strip())
+                m = re.match("""^([^>]*) > (.*) FAILED$""", line.decode(r.encoding).strip())
                 if m is not None:
                     suite = m.group(1)
                     test = m.group(2)
@@ -45,4 +47,4 @@ def main(args):
 # For local testing.
 if __name__ == "__main__":
     result = main({ "log_urls": sys.argv[1] })
-    print json.dumps(result, indent=2)
+    print(json.dumps(result, indent=2))
