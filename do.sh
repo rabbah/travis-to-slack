@@ -26,7 +26,7 @@ PREFIX="travis2slack"
 # default memory for the actions
 ACTION_MEMORY=128
 
-function deploy() {
+function deployPackage() {
   # the package containing all helper actions needed by the apps
   $WSK package update "${PREFIX}"
   $WSK action  update "${PREFIX}/extract" extract-build-info.js -m $ACTION_MEMORY
@@ -41,9 +41,9 @@ function deploy() {
 
 function deployApps() {
   # the apps
-  compose travis2slack.js --deploy "${PREFIX}/notifyApp"
-  compose addSubscription.js --deploy "${PREFIX}/subscribeApp"
-  compose removeSubscription.js --deploy "${PREFIX}/unsubscribeApp"
+  compose travis2slack.js > tmp.json && deploy "${PREFIX}/notifyApp" tmp.json --overwrite && rm -f tmp.json
+  compose addSubscription.js > tmp.json && deploy "${PREFIX}/subscribeApp" tmp.json --overwrite && rm -f tmp.json
+  compose removeSubscription.js > tmp.json && deploy "${PREFIX}/unsubscribeApp" tmp.json --overwrite && rm -f tmp.json
 }
 
 function deployHooks() {
@@ -84,7 +84,7 @@ function usage() {
 
 case "$1" in
 --deploy )
-deploy
+deployPackage
 ;;
 --deploy-app )
 deployApps
