@@ -19,7 +19,7 @@
  *           { "author" : string, 
  *             "build_id": numeric_string,
  *             "status": "success" | "error" | "failure" }
- * @return the record augmented with { "job_ids" : [numeric_string] }
+ * @return the record augmented with { "job_ids" : [numeric_string], "log_urls": [url] }
  */
 function main(args) {
     const build_id = args["build_id"]
@@ -30,23 +30,25 @@ function main(args) {
 
     const request = require("request");
 
-    const travisBuildURL = "https://api.travis-ci.org/repos/openwhisk/openwhisk/builds/" + build_id;
+    const travisBuildURL = "https://api.travis-ci.com/build/" + build_id;
 
     return new Promise(function (resolve, reject) {
         request.get({
             "url" : travisBuildURL,
             "json" : true,
             headers : {
-                "Accept": "application/vnd.travis-ci.2+json"
+                "Accept": "application/vnd.travis-ci.2+json",
+                "Travis-API-Version": "3"
             }
         }, function (error, response, body) {
             if(error) {
-                reject("error while fetching Travis log id");
+                reject("error while fetching Travis build");
             } else {
                 // forwards the incoming arguments...
                 let result = args;
-                // ... after augmenting with array of job ids
+                // ... after augmenting with array of job ids and log urls
                 result["job_ids"] = body["jobs"].map(j => j["id"])
+                result["log_urls"] = result["job_ids"].map(job_id => "https://api.travis-ci.com/job/" + job_id + "/log.txt");
                 resolve(result);
             }
         });

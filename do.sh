@@ -32,7 +32,6 @@ function deployPackage() {
   $WSK action  update "${PREFIX}/extract" extract-build-info.js -m $ACTION_MEMORY
   $WSK action  update "${PREFIX}/is.failure" is-failure.js -m $ACTION_MEMORY
   $WSK action  update "${PREFIX}/fetch.job.id" fetch-job-id.js -m $ACTION_MEMORY
-  $WSK action  update "${PREFIX}/fetch.log.url" fetch-log-url.js -m $ACTION_MEMORY
   $WSK action  update "${PREFIX}/analyze.log" analyze-log.py --kind python:3 -m $ACTION_MEMORY
   $WSK action  update "${PREFIX}/format.for.slack" format-for-slack.js -m $ACTION_MEMORY
   deployApps
@@ -57,7 +56,6 @@ function teardown() {
   $WSK action  delete "${PREFIX}/extract"
   $WSK action  delete "${PREFIX}/is.failure"
   $WSK action  delete "${PREFIX}/fetch.job.id"
-  $WSK action  delete "${PREFIX}/fetch.log.url"
   $WSK action  delete "${PREFIX}/analyze.log"
   $WSK action  delete "${PREFIX}/format.for.slack"
 
@@ -76,6 +74,7 @@ function test() {
   # Edit the author map to provide a valid Slack id for "Jane Doe" for these examples to reach you on Slack.
   $WSK action invoke "${PREFIX}/receive.travis.webhook" --param-file "test1.json"
   $WSK action invoke "${PREFIX}/receive.travis.webhook" --param-file "test2.json"
+  $WSK action invoke "${PREFIX}/receive.travis.webhook" --param-file "test3.json"
 }
 
 function usage() {
