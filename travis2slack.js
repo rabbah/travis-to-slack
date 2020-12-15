@@ -79,7 +79,6 @@ module.exports = composer.let({ prDetails: null, authorSlackInfo: null },
           },
           composer.sequence(
             _ => prDetails,
-            composer.retry(3, `${prefix}/fetch.log.url`),
             `${prefix}/analyze.log`,
             p => Object.assign(p, prDetails, { authorSlackInfo: authorSlackInfo }),
             `${prefix}/format.for.slack`,
